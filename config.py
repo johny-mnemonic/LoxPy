@@ -12,19 +12,17 @@ def load_config(input_defaults=None, input_file=None):
     """
 
     if input_file:
-        lg.debug("Loading default inputs from yaml file %s" % input_file)
+        lg.debug("Loading default inputs from yaml file {}".format(input_file))
         try:
-            cf = open(input_file)
-            ifile = yaml.load(cf)
+            with open(input_file) as f:
+                ifile = yaml.load(f)
         except IOError as e:
-            lg.error("Can't open config file %s: %s" % (input_file, e))
+            lg.error("Can't open config file {0}: {1}".format(input_file, e))
             raise
-        finally:
-            cf.close()
 
         for key, value in ifile.items():
             if not isinstance(value, str):
-                lg.error("Input key %s has not string-typed value (%s), ignoring" % (key, value))
+                lg.error("Input key {0} has not string-typed value ({1}), ignoring".format(key, value))
                 continue
             input_cache[key] = value
 
@@ -33,7 +31,7 @@ def load_config(input_defaults=None, input_file=None):
             try:
                 key, value = input.split('=')
             except ValueError:
-                lg.error("Submitted input value %s is not a valid key=pair, skipping" % input)
+                lg.error("Submitted input value {} is not a valid key=pair, skipping".format(input))
                 continue
             input_cache[key] = value
 

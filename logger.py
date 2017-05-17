@@ -53,11 +53,11 @@ else:
     now = datetime.datetime.now()
     runNo = now.strftime("%Y%m%d%H%M")
 
-lg.debug("Session: %s" % session)
-lg.debug("runNo: %s" % runNo)
+lg.debug("Session: {}".format(session))
+lg.debug("runNo: {}".format(runNo))
 
 # Set Loxone URL
-url = 'http://' + loxhost + '/jdev/sps/io/LightSensor_Pracovna/state'
+url = "http://{0}/jdev/sps/io/LightSensor_Pracovna/state".format(loxhost)
 
 # Create the InfluxDB object
 client = InfluxDBClient(host, port, user, password, dbname)
@@ -68,8 +68,8 @@ try:
         myResponse = requests.get(url, auth=HTTPBasicAuth(loxusr, loxpass), verify=True)
         if (myResponse.ok):
             jData = myResponse.json()
-            lg.debug("The response json content is: %s" % jData)
-            lg.debug("The requested value is: %s" % jData['LL']['value'])
+            lg.debug("The response json content is: {}".format(jData))
+            lg.debug("The requested value is: {}".format(jData['LL']['value']))
 
             iso = time.ctime()
         else:
@@ -89,7 +89,7 @@ try:
             ]
 
         # Write JSON to InfluxDB
-        lg.debug("The write json content is: %s" % json_body)
+        lg.debug("The write json content is: {}".format(json_body))
         client.write_points(json_body)
         # Wait for next sample
         time.sleep(interval)
