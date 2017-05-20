@@ -1,23 +1,19 @@
 #!/usr/bin/python
 
-# import libs for logging
+# import some basic libs
 import time
 import sys
 import datetime
-import logging
 
 # import InfluxDB client
 from influxdb import InfluxDBClient
 
-# import libs for Loxone connection
-import requests
-from requests.auth import HTTPBasicAuth
-import json
-
 # import our own libs
-import config
+from config import load_config, load_measurements
+from loxone import loxclient
 
 # Initialize logging
+import logging
 lg = logging.getLogger(__name__)
 logging.basicConfig(
     #filename=args.log_file,
@@ -26,7 +22,7 @@ logging.basicConfig(
     )
 
 # Read configuration from config file
-config_cache=config.load_config(input_file="secrets.yml")
+config_cache=load_config(input_file="secrets.yml")
 host = config_cache["influxdb::host"]
 port = config_cache["influxdb::port"]
 dbname = config_cache["influxdb::db"]
@@ -56,25 +52,20 @@ else:
 lg.debug("Session: {}".format(session))
 lg.debug("runNo: {}".format(runNo))
 
-# Set Loxone URL
-url = "http://{0}/jdev/sps/io/LightSensor_Pracovna/state".format(loxhost)
-
 # Create the InfluxDB object
 client = InfluxDBClient(host, port, user, password, dbname)
 
+measurements={}
 # Run until keyboard out
 try:
     while True:
-        myResponse = requests.get(url, auth=HTTPBasicAuth(loxusr, loxpass), verify=True)
-        if (myResponse.ok):
-            jData = myResponse.json()
-            lg.debug("The response json content is: {}".format(jData))
-            lg.debug("The requested value is: {}".format(jData['LL']['value']))
+        # Get all measurements from Miniserver
+        for loxobject in load_measurements('measurements.txt'):
+            loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject)
+            measurements[loxobject]=loxval
+        lg.debug("Obtained measurements: {}".format(measurements))
 
-            iso = time.ctime()
-        else:
-            myResponse.raise_for_status()
-
+        iso = time.ctime()
         json_body = [
             {
               "measurement": session,
@@ -82,9 +73,7 @@ try:
                       "run": runNo,
                       },
                   "time": iso,
-                  "fields": {
-                      "LightSensor" : jData['LL']['value']
-                  }
+                  "fields": measurements
               }
             ]
 

@@ -37,4 +37,15 @@ def load_config(input_defaults=None, input_file=None):
 
     return input_cache
 
+def load_measurements(input_file):
+    lg.debug("Loading measurements list from file {}".format(input_file))
+    try:
+        with open(input_file) as f:
+            mlist = f.read().splitlines()
+    except IOError as e:
+        lg.error("Can't open config file {0}: {1}".format(input_file, e))
+        raise
+
+    return mlist
+
 #print(load_config(input_file='secrets.yml')["loxone::host"])
