@@ -17,7 +17,7 @@ def strip_units(value):
             value = value[:-1]
     return value
 
-def loxclient(host, user, password, action='state', obj=None):
+def loxclient(host, user, password, action='state', obj=None, strip=False):
     # Set Loxone URL
     if obj == None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
@@ -29,8 +29,10 @@ def loxclient(host, user, password, action='state', obj=None):
     if (myResponse.ok):
         jData = myResponse.json()
         lg.debug("The response json content is: {}".format(jData))
-        value = strip_units(jData['LL']['value'])
-        lg.debug("The requested value is: {}".format(value))
+        value = jData['LL']['value']
+        if strip:
+            value = strip_units(value)
+        lg.debug("The requested value is: {}".format(value.encode().decode()))
     else:
         myResponse.raise_for_status()
 

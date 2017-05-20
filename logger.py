@@ -61,7 +61,7 @@ try:
     while True:
         # Get all measurements from Miniserver
         for loxobject in load_measurements('measurements.txt'):
-            loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject)
+            loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject, strip=True)
             measurements[loxobject]=loxval
         lg.debug("Obtained measurements: {}".format(measurements))
 
