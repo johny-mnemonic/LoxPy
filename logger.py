@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -p
 
 # import some basic libs
 import time
@@ -34,6 +34,12 @@ loxhost = config_cache["loxone::host"]
 
 # Sample period (s)
 interval = 60
+
+def wait(n):
+    '''Wait until the next increment of n seconds'''
+    x = time.time()
+    lg.debug("It is {0} now, will wait {1}s with next execution".format(time.asctime(), n-(x%n)))
+    time.sleep(n-(x%n))
 
 # Allow user to set session and run number via args otherwise auto-generate
 # TODO remove this section once we get out of alfa testing stage
@@ -81,7 +87,8 @@ try:
         lg.debug("The write json content is: {}".format(json_body))
         client.write_points(json_body)
         # Wait for next sample
-        time.sleep(interval)
+        #time.sleep(interval)
+        wait(60)
 
 except KeyboardInterrupt:
     pass
