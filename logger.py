@@ -61,10 +61,10 @@ lg.debug("runNo: {}".format(runNo))
 # Create the InfluxDB object
 client = InfluxDBClient(host, port, user, password, dbname)
 
-measurements={}
 # Run until keyboard out
 try:
     while True:
+        measurements={}
         # Get all measurements from Miniserver
         for loxobject in load_measurements('measurements.txt'):
             loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject, strip=True)
@@ -74,24 +74,23 @@ try:
             measurements[loxobject]=loxval
         if measurements == {}:
             lg.error("We didn't receive any values from Miniserver. Not going to push anything to InfluxDB.")
-            break
-        lg.debug("Obtained measurements: {}".format(measurements))
+        else:
+            lg.debug("Obtained measurements: {}".format(measurements))
+            iso = time.ctime()
+            json_body = [
+                {
+                  "measurement": session,
+                      "tags": {
+                          "run": runNo,
+                          },
+                      "time": iso,
+                      "fields": measurements
+                  }
+                ]
 
-        iso = time.ctime()
-        json_body = [
-            {
-              "measurement": session,
-                  "tags": {
-                      "run": runNo,
-                      },
-                  "time": iso,
-                  "fields": measurements
-              }
-            ]
-
-        # Write JSON to InfluxDB
-        lg.debug("The write json content is: {}".format(json_body))
-        client.write_points(json_body)
+            # Write JSON to InfluxDB
+            lg.debug("The write json content is: {}".format(json_body))
+            client.write_points(json_body)
         # Wait for next sample
         #time.sleep(interval)
         wait(60)

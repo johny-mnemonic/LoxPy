@@ -41,6 +41,7 @@ def loxclient(host, user, password, action='state', obj=None, strip=False):
             value = strip_units(value)
         lg.debug("The requested value is: {}".format(value.encode().decode()))
     else:
-        myResponse.raise_for_status()
+        lg.error("Connection to Miniserver failed with http status code: {}".format(myResponse.status_code))
+        return value
 
     return value
