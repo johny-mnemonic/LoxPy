@@ -18,14 +18,19 @@ def strip_units(value):
     return value
 
 def loxclient(host, user, password, action='state', obj=None, strip=False):
+    value = None
     # Set Loxone URL
     if obj == None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
     else:
         url = "http://{0}/jdev/sps/io/{2}/{1}".format(host, action, obj)
     lg.debug("Loxone URL is: {}".format(url))
+    try:
+        myResponse = requests.get(url, auth=HTTPBasicAuth(user, password), verify=True)
+    except requests.exceptions.ConnectionError as e:
+        lg.error("Connection to Miniserver failed with: {}".format(e))
+        return value
 
-    myResponse = requests.get(url, auth=HTTPBasicAuth(user, password), verify=True)
     if (myResponse.ok):
         jData = myResponse.json()
         lg.debug("The response json content is: {}".format(jData))

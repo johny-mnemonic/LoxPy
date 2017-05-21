@@ -68,7 +68,13 @@ try:
         # Get all measurements from Miniserver
         for loxobject in load_measurements('measurements.txt'):
             loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject, strip=True)
+            if loxval == None:
+                lg.error("Getting of value for {} failed.".format(loxobject))
+                break
             measurements[loxobject]=loxval
+        if measurements == {}:
+            lg.error("We didn't receive any values from Miniserver. Not going to push anything to InfluxDB.")
+            break
         lg.debug("Obtained measurements: {}".format(measurements))
 
         iso = time.ctime()
