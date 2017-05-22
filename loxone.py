@@ -36,6 +36,7 @@ def loxclient(host, user, password, action='state', obj=None, strip=False):
         lg.debug("The response json content is: {}".format(jData))
         if jData['LL']['Code'] != '200':
             lg.error("Miniserver returned error code: {}".format(jData['LL']['Code']))
+            return value
         value = jData['LL']['value']
         if strip:
             value = float(strip_units(value))
