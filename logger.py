@@ -64,6 +64,7 @@ client = InfluxDBClient(host, port, user, password, dbname)
 # Run until keyboard out
 try:
     while True:
+        iso = time.ctime()
         measurements={}
         # Get all measurements from Miniserver
         for loxobject in load_measurements('measurements.txt'):
@@ -76,7 +77,6 @@ try:
             lg.error("We didn't receive any values from Miniserver. Not going to push anything to InfluxDB.")
         else:
             lg.debug("Obtained measurements: {}".format(measurements))
-            iso = time.ctime()
             json_body = [
                 {
                   "measurement": session,
