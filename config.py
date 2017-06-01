@@ -6,6 +6,7 @@ import yaml
 lg = logging.getLogger(__name__)
 input_cache = {}
 
+
 def load_config(input_defaults=None, input_file=None):
     """
     Load config parameters either from file or stdin
@@ -37,6 +38,7 @@ def load_config(input_defaults=None, input_file=None):
 
     return input_cache
 
+
 def load_measurements(input_file):
     lg.debug("Loading measurements list from file {}".format(input_file))
     try:
@@ -48,4 +50,4 @@ def load_measurements(input_file):
 
     return mlist
 
-#print(load_config(input_file='secrets.yml')["loxone::host"])
+# print(load_config(input_file='secrets.yml')["loxone::host"])

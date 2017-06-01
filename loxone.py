@@ -8,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 import logging
 lg = logging.getLogger(__name__)
 
+
 def strip_units(value):
     while value:
         try:
@@ -17,10 +18,11 @@ def strip_units(value):
             value = value[:-1]
     return value
 
+
 def loxclient(host, user, password, action='state', obj=None, strip=False):
     value = None
     # Set Loxone URL
-    if obj == None:
+    if obj is None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
     else:
         url = "http://{0}/jdev/sps/io/{2}/{1}".format(host, action, obj)
