@@ -1,3 +1,5 @@
 secrets.yml
 __pycache__
+*.pyc
 measurements.txt
+realtime.txt
