@@ -3,10 +3,8 @@
 import config
 
 import argparse
-#import requests
-from requests.auth import HTTPBasicAuth
-import json
-from string import Template
+from loxone import loxclient
+#import json
 
 parser = argparse.ArgumentParser(description="Simple Loxone RESTful client. Without paramteres it checks Miniserver state")
 parser.add_argument("-v", "--verbose", action="store_true",
@@ -18,8 +16,23 @@ parser.add_argument("-o", "--object",
 parser.add_argument("-a", "--action", default='state',
                     help="Action to do with the object. Default is 'state'")
 args = parser.parse_args()
-#if args.verbose:
-#    print("Verbose output turned on")
+
+# Initialize logging
+import logging
+lg = logging.getLogger(__name__)
+if args.verbose:
+    #print("Verbose output turned on")
+    loglvl = logging.INFO
+elif args.debug:
+    #print("Debug output turned on")
+    loglvl = logging.DEBUG
+else:
+    loglvl = logging.ERROR
+logging.basicConfig(
+    # filename=args.log_file,
+    format='%(asctime)s [%(levelname)s] %(name)s %(message)s',
+    level=loglvl
+    )
 
 # Read configuration from config file
 config_cache=config.load_config(input_file="secrets.yml")
@@ -27,6 +40,7 @@ loxusr = config_cache["loxone::user"]
 loxpass = config_cache["loxone::password"]
 loxhost = config_cache["loxone::host"]
 
+# debug default
 args.object = "LightSensor_Pracovna"
 
 if args.object == None:
@@ -34,96 +48,122 @@ if args.object == None:
 else:
     url = 'http://' + loxhost + '/jdev/sps/io/' + args.object + '/' + args.action
 
-from timeit import Timer
 
-# It is a good practice not to hardcode the credentials. So ask the user to enter credentials at runtime
-#myResponse = requests.get(url,auth=HTTPBasicAuth(raw_input("username: "), raw_input("Password: ")), verify=True)
-def test_requests():
+def get_req():
     import requests
+    from requests.auth import HTTPBasicAuth
     myResponse = requests.get(url, auth=HTTPBasicAuth(loxusr,loxpass), verify=True)
-    myResponse.status_code
-    return myResponse.json()
+    if args.debug:
+        print('Http return code is: {0}'.format(myResponse.status_code))
+    # For successful API call, response code will be 200 (OK)
+    if (myResponse.ok):
+        if args.debug:
+            print("The response raw content is:")
+            print(myResponse.text)
+        return myResponse.json()
+    else:
+        # If response code is not ok (200), print the resulting
+        #http error code with description
+        myResponse.raise_for_status()
 
-#import urllib
-#url1 = url + urllib.parse.urlencode({'value': 'data'})
 
-def test_urllib2():
+def get_url2():
     import urllib2
     from base64 import b64encode
-    request = urllib2.Request(url)
-    request.add_header('Authorization', 'Basic ' + b64encode( loxusr + ':' + loxpass))
-    handler = urllib2.urlopen(request)
-    handler.code
-    #handler.read()
-    #json.load(handler)
-    return json.loads(handler.read())
+    import json
+    try:
+        request = urllib2.Request(url)
+        request.add_header('Authorization', 'Basic ' + b64encode( loxusr + ':' + loxpass))
+        handler = urllib2.urlopen(request)
+    except:
+        #lg.error("Connection to Miniserver failed with: {}".format(e))
+        print("Connection to Miniserver failed")
+        return None
+    if args.debug:
+        print('Http return code is: {0}'.format(handler.code))
+    if (handler.code == 200 ):
+        try:
+            rdata = handler.read()
+            jdata = json.loads(rdata)
+            #jdata = json.loads(handler.read())
+        except:
+            print("Failed to parse Json")
+            return None
+        if args.debug:
+            print("The response raw content is:")
+            print(rdata)
+        return jdata
+    else:
+        return None
 
-
-def test_urllib3():
+def get_url3():
     import urllib3
-    #from base64 import b64encode
-    http = urllib3.PoolManager()
-    headers = urllib3.util.make_headers(basic_auth=loxusr + ':' + loxpass)
-    #headers = {'Authorization':'Basic {0}'.format(b64encode( loxusr + ':' + loxpass))}
-    response = http.request('GET', url, headers = headers)
-    response.status
-    print(response.status)
-    print(response.data)
-    return json.loads(response.data)
+    import json
+    try:
+        http = urllib3.PoolManager()
+        headers = urllib3.util.make_headers(basic_auth=loxusr + ':' + loxpass)
+        response = http.request('GET', url, headers = headers)
+    except:
+        #lg.error("Connection to Miniserver failed with: {}".format(e))
+        print("Connection to Miniserver failed")
+        return None
+    if args.debug:
+        print('Http return code is: {0}'.format(response.status))
+    if (response.status == 200 ):
+        if args.debug:
+            print("The response raw content is:")
+            print(response.data)
+        try:
+            jdata = json.loads(response.data)
+        except:
+            print("Failed to parse Json")
+            return None
+        return jdata
+    else:
+        print('Wrong return code')
+        return None
 
 if __name__ == '__main__':
-    t2 = test_urllib2()
-    t3 = test_urllib3()
-    tr = test_requests()
-    t_urllib2 = Timer("test_urllib2()", "from __main__ import test_urllib2")
-    print 'urllib2: {0}'.format(t_urllib2.timeit(number=1))
-    t_urllib3 = Timer("test_urllib3()", "from __main__ import test_urllib3")
-    print 'urllib3: {0}'.format(t_urllib3.timeit(number=1))
-    t_req = Timer("test_requests()", "from __main__ import test_requests")
-    print 'requests: {0}'.format(t_req.timeit(number=1))
+    #from timeit import Timer
+    #t_urllib2 = Timer("get_url2()", "from __main__ import get_url2")
+    #print 'urllib2: {0}'.format(t_urllib2.timeit(number=1))
+    #t_urllib3 = Timer("get_url3()", "from __main__ import get_url3")
+    #print 'urllib3: {0}'.format(t_urllib3.timeit(number=1))
+    #t_req = Timer("get_req()", "from __main__ import get_req")
+    #print 'requests: {0}'.format(t_req.timeit(number=1))
 
-if args.debug:
-    #print('Http return code is: {0}'.format(myResponse.status_code))
-    print('Http return code is: {0}'.format(handler.code))
-
-# For successful API call, response code will be 200 (OK)
-#if (myResponse.ok):
-if (handler.code == '200'):
-#if (response.status == '200')
-    jData = myResponse.json()
-    jData2 = handler.read().json()
-    jData3 = json.loads(response.data.decode('utf-8'))
-    if args.debug:
-        print("The response raw content is:")
-        print(myResponse.text)
-        #print("\n")
-        print("The response json contains {0} properties".format(len(jData)))
-        #print("\n")
-        print("The response json content is:")
-        print(jData)
-        #print("\n")
+    #jData = get_url2()
+    #mock_data = str('{"LL": { "control": "dev/sps/io/LightSensor_Pracovna/state", "value": "531.68", "Code": "200"}}')
+    #print(type(mock_data))
+    #jData = json.loads(mock_data)
+    #print(type(jData))
+    #if args.debug:
+     #   print("The response json contains {0} properties".format(len(jData)))
+      #  print("The response json content is:")
+       # print(jData)
+    # value = jData['LL']['value']
+    lg.debug("Calling loxclient action '{0}' for '{1}'".format(args.action, args.object))
+    value = loxclient(loxhost, loxusr, loxpass, args.action, args.object, strip=False)
     if args.object == None:
-        if jData['LL']['value'] == '1':
+        if value == '1':
             print("Miniserver is booting")
-        elif jData['LL']['value'] == '2':
+        elif value == '2':
             print("Miniserver has loaded the program")
-        elif jData['LL']['value'] == '3':
+        elif value == '3':
             print("Miniserver has started")
-        elif jData['LL']['value'] == '4':
+        elif value == '4':
             print("Loxone link has started")
-        elif jData['LL']['value'] == '5':
+        elif value == '5':
             print("Miniserver is running")
-        elif jData['LL']['value'] == '6':
+        elif value == '6':
             print("Miniserver state is changing")
-        elif jData['LL']['value'] == '7':
+        elif value == '7':
             print("Miniserver is in error state")
-        elif jData['LL']['value'] == '8':
+        elif value == '8':
             print("Miniserver is updating")
     elif args.verbose or args.debug:
-        print("Value of {} is {} ".format(args.object,jData['LL']['value']))
+        lg.info("Value of {} is {} ".format(args.object,value))
     else:
-        print(jData['LL']['value'])
+        print(value)
 
-else:
-    # If response code is not ok (200), print the resulting http error code with description
-    myResponse.raise_for_status()
+

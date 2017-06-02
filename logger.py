@@ -62,6 +62,12 @@ lg.debug("runNo: {}".format(runNo))
 # Create the InfluxDB object
 client = InfluxDBClient(host, port, user, password, dbname)
 
+if __name__ == '__main__':
+    #from timeit import Timer
+    #t_urllib2 = Timer("get_url2()", "from __main__ import get_url2")
+    #print 'urllib2: {0}'.format(t_urllib2.timeit(number=1))
+exit
+
 # Run until keyboard out
 try:
     while True:
