@@ -124,13 +124,13 @@ def get_url3():
         return None
 
 if __name__ == '__main__':
-    #from timeit import Timer
-    #t_urllib2 = Timer("get_url2()", "from __main__ import get_url2")
-    #print 'urllib2: {0}'.format(t_urllib2.timeit(number=1))
-    #t_urllib3 = Timer("get_url3()", "from __main__ import get_url3")
-    #print 'urllib3: {0}'.format(t_urllib3.timeit(number=1))
-    #t_req = Timer("get_req()", "from __main__ import get_req")
-    #print 'requests: {0}'.format(t_req.timeit(number=1))
+    from timeit import Timer
+    t_urllib2 = Timer("get_url2()", "from __main__ import get_url2")
+    print 'urllib2: {0}'.format(t_urllib2.timeit(number=1))
+    t_urllib3 = Timer("get_url3()", "from __main__ import get_url3")
+    print 'urllib3: {0}'.format(t_urllib3.timeit(number=1))
+    t_req = Timer("get_req()", "from __main__ import get_req")
+    print 'requests: {0}'.format(t_req.timeit(number=1))
 
     #jData = get_url2()
     #mock_data = str('{"LL": { "control": "dev/sps/io/LightSensor_Pracovna/state", "value": "531.68", "Code": "200"}}')
