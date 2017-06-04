@@ -47,7 +47,7 @@ if value == None:
     lg.error("Miniserver connection failed or returned no data")
     exit(1)
 
-if args.object == None:
+if args.object == None and args.action == 'state':
     if value == '1':
         print("Miniserver is booting")
     elif value == '2':

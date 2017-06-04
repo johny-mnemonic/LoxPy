@@ -74,8 +74,10 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
     # Set Loxone URL
     if obj is None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
+    elif obj in ['sys', 'cfg', 'lan', 'bus', 'task0']:
+        url = "http://{0}/jdev/{1}/{2}".format(host, obj, action)
     else:
-        url = "http://{0}/jdev/sps/io/{2}/{1}".format(host, action, obj)
+        url = "http://{0}/jdev/sps/io/{1}/{2}".format(host, obj, action)
     lg.debug("Loxone URL is: {}".format(url))
 
     # Get Json data from Miniserver
@@ -99,6 +101,7 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
         value = float(strip_units(value))
         lg.debug("The requested value is: {}".format(value))
     else:
-        lg.debug("The requested value is: {}".format(value.encode().decode()))
+        # Do not crash on non-ASCII chars (i.e. Czech). Convert it into UTF8 string for logger first.
+        lg.debug("The requested value is: {}".format(value.encode("utf-8")))
 
     return value
