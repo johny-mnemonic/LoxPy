@@ -74,6 +74,8 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
     # Set Loxone URL
     if obj is None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
+    elif '/' in obj:
+        url = "http://{0}/jdev/{1}".format(host, obj)
     elif obj in ['sys', 'cfg', 'lan', 'bus', 'task0']:
         url = "http://{0}/jdev/{1}/{2}".format(host, obj, action)
     else:
