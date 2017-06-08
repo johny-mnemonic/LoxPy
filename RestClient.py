@@ -2,17 +2,23 @@
 
 import config
 import argparse
+import getpass
+
 from loxone import loxclient
 
 parser = argparse.ArgumentParser(description="Simple Loxone RESTful client. Without paramteres it checks Miniserver state")
-parser.add_argument("-v", "--verbose", action="store_true",
+parser.add_argument("-v", "--verbose", action = "store_true",
                     help="Enable verbose output")
-parser.add_argument("-d", "--debug", action="store_true",
+parser.add_argument("-d", "--debug", action = "store_true",
                     help="Enable debug output")
 parser.add_argument("-o", "--object",
                     help="Loxone object to query. Could be name or UUID")
-parser.add_argument("-a", "--action", default='state',
+parser.add_argument("-a", "--action", default = 'state',
                     help="Action to do with the object. Default is 'state'. You can send 'On', 'Off' or 'pulse' (to simulate click).")
+parser.add_argument("-u", "--user", default = None,
+                    help="Loxone user to use instead of the one in config file. Will ask for password.")
+#parser.add_argument("-p", "--password", default = None,
+#                    help="Loxone user password")
 args = parser.parse_args()
 
 # Initialize logging
@@ -34,9 +40,14 @@ logging.basicConfig(
 
 # Read configuration from config file
 config_cache=config.load_config(input_file="secrets.yml")
-loxusr = config_cache["loxone::user"]
-loxpass = config_cache["loxone::password"]
 loxhost = config_cache["loxone::host"]
+if args.user is None:
+    loxusr = config_cache["loxone::user"]
+    loxpass = config_cache["loxone::password"]
+else:
+    loxusr = args.user
+    loxpass = getpass.getpass()
+
 
 # debug default
 #args.object = "LightSensor_Pracovna"
