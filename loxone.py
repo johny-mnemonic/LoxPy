@@ -99,6 +99,7 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
         value = float(strip_units(value))
         lg.debug("The requested value is: {}".format(value))
     else:
-        lg.debug("The requested value is: {}".format(value.encode().decode()))
+        # Do not crash on non-ASCII chars (i.e. Czech). Convert it into UTF8 string for logger first.
+        lg.debug("The requested value is: {}".format(value.encode("utf-8")))
 
     return value
