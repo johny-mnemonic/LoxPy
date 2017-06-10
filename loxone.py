@@ -74,8 +74,12 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
     # Set Loxone URL
     if obj is None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
+    elif '/' in obj:
+        url = "http://{0}/jdev/{1}".format(host, obj)
+    elif obj in ['sys', 'cfg', 'lan', 'bus', 'task0']:
+        url = "http://{0}/jdev/{1}/{2}".format(host, obj, action)
     else:
-        url = "http://{0}/jdev/sps/io/{2}/{1}".format(host, action, obj)
+        url = "http://{0}/jdev/sps/io/{1}/{2}".format(host, obj, action)
     lg.debug("Loxone URL is: {}".format(url))
 
     # Get Json data from Miniserver

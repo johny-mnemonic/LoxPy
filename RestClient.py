@@ -52,7 +52,7 @@ if (myResponse.ok):
     print("The response json content is:")
     print(jData)
     #print("\n")
-  if args.object == None:
+  if args.object == None and args.action == 'state':
     if jData['LL']['value'] == '1':
       print("Miniserver is booting")
     elif jData['LL']['value'] == '2':
