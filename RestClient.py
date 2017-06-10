@@ -1,79 +1,85 @@
 #!/usr/bin/python
 
 import config
-
 import argparse
-import requests
-from requests.auth import HTTPBasicAuth
-import json
-from string import Template
+import getpass
+
+from loxone import loxclient
 
 parser = argparse.ArgumentParser(description="Simple Loxone RESTful client. Without paramteres it checks Miniserver state")
-parser.add_argument("-v", "--verbose", action="store_true",
+parser.add_argument("-v", "--verbose", action = "store_true",
                     help="Enable verbose output")
-parser.add_argument("-d", "--debug", action="store_true",
+parser.add_argument("-d", "--debug", action = "store_true",
                     help="Enable debug output")
 parser.add_argument("-o", "--object",
                     help="Loxone object to query. Could be name or UUID")
-parser.add_argument("-a", "--action", default='state',
-                    help="Action to do with the object. Default is 'state'")
+parser.add_argument("-a", "--action", default = 'state',
+                    help="Action to do with the object. Default is 'state'. You can send 'On', 'Off' or 'pulse' (to simulate click).")
+parser.add_argument("-u", "--user", default = None,
+                    help="Loxone user to use instead of the one in config file. Will ask for password.")
+parser.add_argument("-p", "--password", default = None,
+                    help="Loxone user password")
 args = parser.parse_args()
-#if args.verbose:
-#    print("Verbose output turned on")
+
+# Initialize logging
+import logging
+lg = logging.getLogger(__name__)
+if args.verbose:
+    #print("Verbose output turned on")
+    loglvl = logging.INFO
+elif args.debug:
+    #print("Debug output turned on")
+    loglvl = logging.DEBUG
+else:
+    loglvl = logging.ERROR
+logging.basicConfig(
+    # filename=args.log_file,
+    format='%(asctime)s [%(levelname)s] %(name)s %(message)s',
+    level=loglvl
+    )
 
 # Read configuration from config file
 config_cache=config.load_config(input_file="secrets.yml")
-loxusr = config_cache["loxone::user"]
-loxpass = config_cache["loxone::password"]
 loxhost = config_cache["loxone::host"]
 
+# Override credentials if specified by user
+if args.user is None:
+    loxusr = config_cache["loxone::user"]
+    loxpass = config_cache["loxone::password"]
+else:
+    loxusr = args.user
+    if args.password is None:
+        loxpass = getpass.getpass()
+    else:
+        loxpass = args.password
+
+# debug default
 #args.object = "LightSensor_Pracovna"
 
-if args.object == None:
-  url = 'http://loxone/jdev/sps/state'
+lg.debug("Calling loxclient action '{0}' for '{1}'".format(args.action, args.object))
+value = loxclient(loxhost, loxusr, loxpass, args.action, args.object)
+if value == None:
+    lg.error("Miniserver connection failed or returned no data")
+    exit(1)
+
+if args.object == None and args.action == 'state':
+    if value == '1':
+        print("Miniserver is booting")
+    elif value == '2':
+        print("Miniserver has loaded the program")
+    elif value == '3':
+        print("Miniserver has started")
+    elif value == '4':
+        print("Loxone link has started")
+    elif value == '5':
+        print("Miniserver is running")
+    elif value == '6':
+        print("Miniserver state is changing")
+    elif value == '7':
+        print("Miniserver is in error state")
+    elif value == '8':
+        print("Miniserver is updating")
+elif args.verbose or args.debug:
+    lg.info("Value of {} is {} ".format(args.object,value))
 else:
-  url = 'http://' + loxhost + '/jdev/sps/io/' + args.object + '/' + args.action
-
-# It is a good practice not to hardcode the credentials. So ask the user to enter credentials at runtime
-#myResponse = requests.get(url,auth=HTTPBasicAuth(raw_input("username: "), raw_input("Password: ")), verify=True)
-myResponse = requests.get(url, auth=HTTPBasicAuth(loxusr,loxpass), verify=True)
-if args.debug:
-  print('Http return code is: {0}'.format(myResponse.status_code))
-
-# For successful API call, response code will be 200 (OK)
-if (myResponse.ok):
-  jData = myResponse.json()
-  if args.debug:
-    print("The response raw content is:")
-    print(myResponse.text)
-    #print("\n")
-    print("The response json contains {0} properties".format(len(jData)))
-    #print("\n")
-    print("The response json content is:")
-    print(jData)
-    #print("\n")
-  if args.object == None and args.action == 'state':
-    if jData['LL']['value'] == '1':
-      print("Miniserver is booting")
-    elif jData['LL']['value'] == '2':
-      print("Miniserver has loaded the program")
-    elif jData['LL']['value'] == '3':
-      print("Miniserver has started")
-    elif jData['LL']['value'] == '4':
-      print("Loxone link has started")
-    elif jData['LL']['value'] == '5':
-      print("Miniserver is running")
-    elif jData['LL']['value'] == '6':
-      print("Miniserver state is changing")
-    elif jData['LL']['value'] == '7':
-      print("Miniserver is in error state")
-    elif jData['LL']['value'] == '8':
-      print("Miniserver is updating")
-  elif args.verbose or args.debug:
-    print("Value of {} is {} ".format(args.object,jData['LL']['value']))
-  else:
-    print(jData['LL']['value'])
-
-else:
-  # If response code is not ok (200), print the resulting http error code with description
-  myResponse.raise_for_status()
+    print(value)
