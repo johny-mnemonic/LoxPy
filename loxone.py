@@ -16,7 +16,9 @@ lg = logging.getLogger(__name__)
 
 def get_req(url, user, password):
     try:
-        myResponse = requests.get(url, auth=HTTPBasicAuth(user, password), verify=True)
+        myResponse = requests.get(
+            url, auth=HTTPBasicAuth(user, password), verify=True
+        )
     except requests.exceptions.ConnectionError as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
@@ -24,23 +26,27 @@ def get_req(url, user, password):
     if (myResponse.ok):
         return myResponse.json()
     else:
-        lg.error("Connection to Miniserver failed with http status code: {}".format(myResponse.status_code))
+        lg.error("Connection to Miniserver failed \
+        with http status code: {}".format(myResponse.status_code))
         return None
 
 
 def get_url2(url, user, password):
     try:
         request = urllib2.Request(url)
-        request.add_header('Authorization', 'Basic ' + b64encode( user + ':' + password))
+        request.add_header(
+            'Authorization', 'Basic ' + b64encode(user + ':' + password)
+        )
         handler = urllib2.urlopen(request)
     except urllib2.HTTPError as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
 
-    if (handler.code == 200 ):
+    if (handler.code == 200):
         return json.loads(handler.read())
     else:
-        lg.error("Connection to Miniserver failed with http status code: {}".format(handler.code))
+        lg.error("Connection to Miniserver failed \
+        with http status code: {}".format(handler.code))
         return None
 
 
@@ -48,15 +54,16 @@ def get_url3(url, user, password):
     try:
         http = urllib3.PoolManager()
         headers = urllib3.util.make_headers(basic_auth=user + ':' + password)
-        response = http.request('GET', url, headers = headers)
+        response = http.request('GET', url, headers=headers)
     except urllib3.exceptions.NewConnectionError as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
 
-    if (response.status == 200 ):
+    if (response.status == 200):
         return json.loads(response.data)
     else:
-        lg.error("Connection to Miniserver failed with http status code: {}".format(response.status))
+        lg.error("Connection to Miniserver failed \
+        with http status code: {}".format(response.status))
         return None
 
 
@@ -70,7 +77,9 @@ def strip_units(value):
     return value
 
 
-def loxclient(host, user, password, action='state', obj=None, strip=False, lib='requests'):
+def loxclient(
+    host, user, password, action='state', obj=None, strip=False, lib='requests'
+    ):
     # Set Loxone URL
     if obj is None:
         url = "http://{0}/jdev/sps/{1}".format(host, action)
@@ -83,18 +92,22 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
     lg.debug("Loxone URL is: {}".format(url))
 
     # Get Json data from Miniserver
-    #mock_data = str('{"LL": { "control": "dev/sps/io/LightSensor_Pracovna/state", "value": "531.68", "Code": "200"}}')
+    #obj = 'Dummy_Object' if obj is None else obj
+    #mock_data = str('{"LL": { "control": "dev/sps/io/' + obj + '/state", "value": "531.68", "Code": "200"}}')
     #jData = json.loads(mock_data)
     get = {'requests': get_req, 'urllib2': get_url2, 'urllib3': get_url3}
     jData = get[lib](url, user, password)
-    if jData == None:
+    if jData is None:
         # Getting the data failed, bailing out
         return None
     lg.debug("The response json content is: {}".format(jData))
 
-    # Check return code inside the json. If it's not 200, response probably doesn't contain what we asked for.
+    # Check return code inside the json.
+    # If it's not 200, response probably doesn't contain what we asked for.
     if jData['LL']['Code'] != '200':
-        lg.error("Miniserver returned error code: {}".format(jData['LL']['Code']))
+        lg.error(
+            "Miniserver returned error code: {}".format(jData['LL']['Code'])
+        )
         return None
 
     # Get the value from json response and optionally strip it from units.
@@ -103,7 +116,8 @@ def loxclient(host, user, password, action='state', obj=None, strip=False, lib='
         value = float(strip_units(value))
         lg.debug("The requested value is: {}".format(value))
     else:
-        # Do not crash on non-ASCII chars (i.e. Czech). Convert it into UTF8 string for logger first.
+        # Do not crash on non-ASCII chars (i.e. Czech).
+        # Convert it into UTF8 string for logger first.
         lg.debug("The requested value is: {}".format(value.encode("utf-8")))
 
     return value

@@ -5,6 +5,8 @@ import time
 import sys
 import datetime
 import argparse
+import textwrap
+import logging
 
 # import InfluxDB client
 from influxdb import InfluxDBClient
@@ -13,24 +15,34 @@ from influxdb import InfluxDBClient
 from config import load_config, load_measurements
 from loxone import loxclient
 
-parser = argparse.ArgumentParser(description="Logger script for getting stats from Miniserver to InfluxDB")
-parser.add_argument("-v", "--verbose", action = "store_true",
-                    help="Enable verbose output")
-parser.add_argument("-d", "--debug", action = "store_true",
-                    help="Enable debug output")
-parser.add_argument("--dry", action = "store_true",
-                    help="Dry-run. No writing to InfluxDB. Only get values from Miniserver and time it.")
+parser = argparse.ArgumentParser(
+    description="Logger script for getting stats from Miniserver to InfluxDB"
+)
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="Enable verbose output"
+)
+parser.add_argument(
+    "-d", "--debug", action="store_true", help="Enable debug output"
+)
+parser.add_argument(
+    "--dry", action="store_true", help=textwrap.dedent('''\
+    Do not write to InfluxDB. Only get values from Miniserver."''')
+)
 # Allow user to set session and run number via args otherwise auto-generate
-parser.add_argument("-s", "--session", default = "dev",
-                    help="Logging session. Default is ''dev'")
-parser.add_argument("-r", "--run", default = None,
-                    help="Run number. Default is generated from datetime.now()")
-parser.add_argument("-l", "--lib", default = "requests",
-                    help="Http library. Default is 'requests'")
+parser.add_argument(
+    "-s", "--session", default="dev", help="Logging session. Default is ''dev'"
+)
+parser.add_argument(
+    "-r", "--run", default=None,
+    help="Run number. Default is generated from datetime.now()"
+)
+parser.add_argument(
+    "-l", "--lib", default="requests",
+    help="Http library. Default is 'requests'"
+)
 args = parser.parse_args()
 
 # Initialize logging
-import logging
 lg = logging.getLogger(__name__)
 if args.verbose:
     #print("Verbose output turned on")
@@ -74,7 +86,8 @@ lg.debug("Run number: {}".format(runNo))
 def wait(n):
     '''Wait until the next increment of n seconds'''
     x = time.time()
-    lg.debug("It is {0} now, will wait {1}s with next execution".format(time.asctime(), n - (x % n)))
+    lg.debug("It is {0} now, \
+    will wait {1}s with next execution".format(time.asctime(), n - (x % n)))
     time.sleep(n - (x % n))
 
 
@@ -83,7 +96,9 @@ def get_measurements():
     # Get all measurements from Miniserver
     lg.info("Getting measurements from Miniserver...")
     for loxobject in load_measurements('measurements.txt'):
-        loxval = loxclient(loxhost, loxusr, loxpass, obj=loxobject, strip=True, lib=args.lib)
+        loxval = loxclient(
+            loxhost, loxusr, loxpass, obj=loxobject, strip=True, lib=args.lib
+        )
         if loxval is None:
             lg.error("Getting of value for {} failed.".format(loxobject))
             continue
@@ -114,8 +129,12 @@ def write_measurements(data):
 
 if args.dry:
     from timeit import Timer
-    t_collect = Timer("get_measurements()", "from __main__ import get_measurements")
-    print 'Time to get all measurements: {0}'.format(t_collect.timeit(number=1))
+    t_collect = Timer(
+        "get_measurements()", "from __main__ import get_measurements"
+    )
+    print(
+        'Time to get all measurements: {0}'.format(t_collect.timeit(number=1))
+    )
     exit(0)
 
 # Run until keyboard out
@@ -124,7 +143,8 @@ try:
         iso = time.ctime()
         measurements = get_measurements()
         if measurements == {}:
-            lg.error("We didn't receive any values from Miniserver. Not going to push anything to InfluxDB.")
+            lg.error("We didn't receive any values from Miniserver. \
+            Not going to push anything to InfluxDB.")
         else:
             write_measurements(measurements)
         # Wait for next sample
