@@ -40,10 +40,15 @@ parser.add_argument(
     "-l", "--lib", default="requests",
     help="Http library. Default is 'requests'"
 )
+parser.add_argument(
+    "-log", "--log-file", default=None,
+    help="Log into specified file, instead of stdout"
+)
 args = parser.parse_args()
 
 # Initialize logging
 lg = logging.getLogger(__name__)
+log_format='%(asctime)s %(threadName)s [%(levelname)s] %(name)s %(message)s'
 if args.verbose:
     #print("Verbose output turned on")
     loglvl = logging.INFO
@@ -52,11 +57,17 @@ elif args.debug:
     loglvl = logging.DEBUG
 else:
     loglvl = logging.ERROR
-logging.basicConfig(
-    # filename=args.log_file,
-    format='%(asctime)s %(threadName)s [%(levelname)s] %(name)s %(message)s',
-    level=loglvl
-    )
+if args.log_file is None:
+    logging.basicConfig(
+        format=log_format,
+        level=loglvl
+        )
+else:
+    logging.basicConfig(
+        filename=args.log_file,
+        format=log_format,
+        level=loglvl
+        )
 
 # Read configuration from config file
 config_cache = load_config(input_file="secrets.yml")
