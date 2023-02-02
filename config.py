@@ -16,7 +16,7 @@ def load_config(input_defaults=None, input_file=None):
         lg.debug("Loading default inputs from yaml file {}".format(input_file))
         try:
             with open(input_file) as f:
-                ifile = yaml.load(f)
+                ifile = yaml.full_load(f)
         except IOError as e:
             lg.error("Can't open config file {0}: {1}".format(input_file, e))
             raise
