@@ -17,9 +17,9 @@ lg = logging.getLogger(__name__)
 def get_req(url, user, password):
     try:
         myResponse = requests.get(
-            url, auth=HTTPBasicAuth(user, password), verify=True
+            url, auth=HTTPBasicAuth(user, password), verify=True, timeout=(2.0, 7.0)
         )
-    except requests.exceptions.ConnectionError as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout ) as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
 
@@ -37,7 +37,7 @@ def get_url2(url, user, password):
         request.add_header(
             'Authorization', 'Basic ' + b64encode(user + ':' + password)
         )
-        handler = urllib2.urlopen(request)
+        handler = urllib2.urlopen(request, timeout=7)
     except urllib2.HTTPError as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
@@ -54,7 +54,7 @@ def get_url3(url, user, password):
     try:
         http = urllib3.PoolManager()
         headers = urllib3.util.make_headers(basic_auth=user + ':' + password)
-        response = http.request('GET', url, headers=headers)
+        response = http.request('GET', url, headers=headers, timeout=Timeout(connect=2.0, read=7.0))
     except urllib3.exceptions.NewConnectionError as e:
         lg.error("Connection to Miniserver failed with: {}".format(e))
         return None
